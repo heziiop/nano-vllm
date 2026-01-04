@@ -16,7 +16,7 @@ class LLMEngine:
 
     def __init__(self, model, **kwargs):
         config_fields = {field.name for field in fields(Config)}
-        config_kwargs = {k: v for k, v in kwargs.items() if k in config_fields}
+        config_kwargs = {k: v for k, v in kwargs.items() if k in config_fields} # 收集Config需要的kwargs
         config = Config(model, **config_kwargs)
         self.ps = []
         self.events = []

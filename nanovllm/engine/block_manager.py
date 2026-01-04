@@ -13,7 +13,7 @@ class Block:
         self.hash = -1
         self.token_ids = []
 
-    def update(self, hash: int, token_ids: list[int]):
+    def update(self, hash: int, token_ids: list[int]): # 更新该block的hash和token_ids
         self.hash = hash
         self.token_ids = token_ids
 
@@ -34,7 +34,7 @@ class BlockManager:
 
     @classmethod
     def compute_hash(cls, token_ids: list[int], prefix: int = -1):
-        h = xxhash.xxh64()
+        h = xxhash.xxh64() # xxhash支持增量hash
         if prefix != -1:
             h.update(prefix.to_bytes(8, "little"))
         h.update(np.array(token_ids).tobytes())
@@ -57,11 +57,12 @@ class BlockManager:
         return len(self.free_block_ids) >= seq.num_blocks
 
     def allocate(self, seq: Sequence):
-        assert not seq.block_table
+        assert not seq.block_table # 只用于seq的prefill阶段，必然从第0个token开始考虑
         h = -1
         cache_miss = False
         for i in range(seq.num_blocks):
-            token_ids = seq.block(i)
+            token_ids = seq.block(i) # 获取seq第i个block对应的token ids
+            # 只有完整的block才会计算其hash，不完整的block因为可能会增加新token，所以不能被不同seq共享，因此不计算hash
             h = self.compute_hash(token_ids, h) if len(token_ids) == self.block_size else -1
             block_id = self.hash_to_block_id.get(h, -1)
             if block_id == -1 or self.blocks[block_id].token_ids != token_ids:
@@ -75,6 +76,7 @@ class BlockManager:
                     block = self.blocks[block_id]
                     block.ref_count += 1
                 else:
+                    # 可能出现
                     block = self._allocate_block(block_id)
             if h != -1:
                 block.update(h, token_ids)
