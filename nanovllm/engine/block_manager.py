@@ -76,9 +76,9 @@ class BlockManager:
                     block = self.blocks[block_id]
                     block.ref_count += 1
                 else:
-                    # 可能出现
+                    # 可能出现cache hit但是需要重新分配block的情况，因为之前可能有前缀相同的seq用过这个block,用完就释放掉了
                     block = self._allocate_block(block_id)
-            if h != -1:
+            if h != -1: # 如果是个完整的block,就update一下这个block
                 block.update(h, token_ids)
                 self.hash_to_block_id[h] = block_id
             seq.block_table.append(block_id)
