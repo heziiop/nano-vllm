@@ -22,7 +22,7 @@ class Sequence:
         self.last_token = token_ids[-1]
         self.num_tokens = len(self.token_ids)
         self.num_prompt_tokens = len(token_ids)
-        self.num_cached_tokens = 0 # 此序列有多少token被缓存
+        self.num_cached_tokens = 0 # 此序列有多少token命中前缀缓存，被allocate函数修改
         self.block_table = [] # 此序列占用哪些block
         self.temperature = sampling_params.temperature
         self.max_tokens = sampling_params.max_tokens
@@ -51,7 +51,7 @@ class Sequence:
         return self.token_ids[self.num_prompt_tokens:]
 
     @property
-    def num_cached_blocks(self): # 此序列占用了几个block
+    def num_cached_blocks(self): # 此seq可复用的前缀block数
         return self.num_cached_tokens // self.block_size
 
     @property
@@ -62,7 +62,7 @@ class Sequence:
     def last_block_num_tokens(self): # 占用的最后一个block里面存了多少token
         return self.num_tokens - (self.num_blocks - 1) * self.block_size
 
-    def block(self, i): # 取出某block对应的token_ids
+    def block(self, i): # 按block_size取出每block对应的token_ids
         assert 0 <= i < self.num_blocks
         return self.token_ids[i*self.block_size: (i+1)*self.block_size] # python list的切片操作不会越界，如果最后一个block没有填满，会自动调整end
 
